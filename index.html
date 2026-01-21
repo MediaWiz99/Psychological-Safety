@@ -230,10 +230,50 @@
             ]
         };
         const dimensionData = {
-            voice: { name: "Speaking Up", icon: "🗣️", color: "#1565C0", description: "The extent to which team members feel comfortable voicing opinions, concerns, and ideas — even when they differ from the majority.", highBehaviors: ["Raises concerns early and often", "Shares dissenting views respectfully", "Asks questions without hesitation", "Offers suggestions for improvement"], building: ["Invite quiet voices into discussions", "Thank people for sharing concerns", "Model vulnerability by sharing your own uncertainties", "Create explicit time for questions"] },
-            risk: { name: "Risk Taking", icon: "🎯", color: "#2E7D32", description: "The degree to which team members feel safe taking interpersonal risks like trying new things, proposing bold ideas, or challenging the status quo.", highBehaviors: ["Proposes innovative solutions", "Volunteers for challenging tasks", "Experiments without fear of failure", "Challenges conventional approaches"], building: ["Celebrate intelligent failures", "Reward effort and learning, not just outcomes", "Share your own failed experiments", "Create low-stakes opportunities to try new things"] },
-            mistakes: { name: "Learning from Mistakes", icon: "💡", color: "#7B1FA2", description: "How the team treats errors and failures — as punishable offenses or as valuable learning opportunities.", highBehaviors: ["Openly discusses mistakes", "Conducts blameless post-mortems", "Asks for help without embarrassment", "Views failures as data for improvement"], building: ["Conduct blame-free retrospectives", "Share your own mistakes openly", "Focus on systems, not individuals", "Ask 'What can we learn?' not 'Who's at fault?'"] },
-            inclusion: { name: "Inclusion & Belonging", icon: "🤝", color: "#C62828", description: "The sense that all team members are valued, respected, and genuinely belong — regardless of their background or role.", highBehaviors: ["Actively includes all team members", "Shows genuine interest in others", "Gives credit generously", "Supports teammates' success"], building: ["Learn about team members as people", "Ensure everyone has a voice in meetings", "Recognize contributions publicly", "Address exclusionary behavior immediately"] }
+            voice: { 
+                name: "Speaking Up", 
+                icon: "🗣️", 
+                color: "#1565C0", 
+                description: "The extent to which team members feel comfortable voicing opinions, concerns, and ideas — even when they differ from the majority.", 
+                profileSummary: "This dimension measures how freely team members can express their thoughts, concerns, and dissenting opinions without fear of negative consequences.",
+                highBehaviors: ["Raises concerns early and often", "Shares dissenting views respectfully", "Asks questions without hesitation", "Offers suggestions for improvement"], 
+                building: ["Invite quiet voices into discussions", "Thank people for sharing concerns", "Model vulnerability by sharing your own uncertainties", "Create explicit time for questions"],
+                swotHigh: "Team has strong voice—members speak up freely, enabling early problem detection",
+                swotLow: "Limited voice creates blind spots; issues go unreported until they become crises"
+            },
+            risk: { 
+                name: "Risk Taking", 
+                icon: "🎯", 
+                color: "#2E7D32", 
+                description: "The degree to which team members feel safe taking interpersonal risks like trying new things, proposing bold ideas, or challenging the status quo.", 
+                profileSummary: "This dimension measures willingness to experiment, innovate, and try new approaches even when failure is possible.",
+                highBehaviors: ["Proposes innovative solutions", "Volunteers for challenging tasks", "Experiments without fear of failure", "Challenges conventional approaches"], 
+                building: ["Celebrate intelligent failures", "Reward effort and learning, not just outcomes", "Share your own failed experiments", "Create low-stakes opportunities to try new things"],
+                swotHigh: "Team embraces innovation—members try new approaches and challenge status quo",
+                swotLow: "Risk aversion limits innovation; team sticks to safe, proven approaches only"
+            },
+            mistakes: { 
+                name: "Learning from Mistakes", 
+                icon: "💡", 
+                color: "#7B1FA2", 
+                description: "How the team treats errors and failures — as punishable offenses or as valuable learning opportunities.", 
+                profileSummary: "This dimension measures whether mistakes are treated as learning opportunities or as failures to be punished or hidden.",
+                highBehaviors: ["Openly discusses mistakes", "Conducts blameless post-mortems", "Asks for help without embarrassment", "Views failures as data for improvement"], 
+                building: ["Conduct blame-free retrospectives", "Share your own mistakes openly", "Focus on systems, not individuals", "Ask 'What can we learn?' not 'Who's at fault?'"],
+                swotHigh: "Team learns rapidly—mistakes become fuel for continuous improvement",
+                swotLow: "Mistakes are hidden; team repeats errors and fails to improve processes"
+            },
+            inclusion: { 
+                name: "Inclusion & Belonging", 
+                icon: "🤝", 
+                color: "#C62828", 
+                description: "The sense that all team members are valued, respected, and genuinely belong — regardless of their background or role.", 
+                profileSummary: "This dimension measures whether all team members feel valued, respected, and that they genuinely belong.",
+                highBehaviors: ["Actively includes all team members", "Shows genuine interest in others", "Gives credit generously", "Supports teammates' success"], 
+                building: ["Learn about team members as people", "Ensure everyone has a voice in meetings", "Recognize contributions publicly", "Address exclusionary behavior immediately"],
+                swotHigh: "Strong belonging—all members feel valued, driving retention and engagement",
+                swotLow: "Exclusion or favoritism damages morale and drives turnover"
+            }
         };
         const levels = [
             { min: 64, max: 80, name: "High Psychological Safety", zone: "learning", desc: "Your team has a strong foundation of trust and openness. Team members feel safe to speak up, take risks, and learn from mistakes." },
@@ -293,6 +333,20 @@
             const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
             const highestDim = sorted[0][0];
             const lowestDim = sorted[3][0];
+            
+            // Calculate safety level and tracker code
+            const safetyLevel = totalScore >= 64 ? 'High' : totalScore >= 48 ? 'Moderate' : totalScore >= 32 ? 'Limited' : 'Low';
+            const trackerCode = `PSA-${safetyLevel.charAt(0)}-${totalScore}`;
+            
+            // Determine overall profile
+            const profileDescription = totalScore >= 64 
+                ? "Your team demonstrates strong psychological safety. Members feel comfortable speaking up, taking risks, and learning from mistakes."
+                : totalScore >= 48 
+                ? "Your team has moderate psychological safety with room to grow. Some members may still hesitate to speak up or take risks."
+                : totalScore >= 32
+                ? "Your team has limited psychological safety. Many members likely hold back ideas and concerns due to fear of consequences."
+                : "Your team lacks psychological safety. Members stay silent to avoid risk, severely limiting learning and innovation.";
+            
             document.getElementById('results').innerHTML = `
                 <div class="results-header"><h2>🛡️ Your Team's Psychological Safety Profile</h2><div class="student-name">${studentName}</div><div class="date">Completed: ${new Date(surveyDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div></div>
                 <div class="overall-score">
@@ -305,6 +359,56 @@
                         <div class="zone anxiety ${level.zone === 'anxiety' ? 'active' : ''}"><div class="zone-name">😟 Anxiety Zone</div><div class="zone-desc">Uncertain, holding back</div></div>
                     </div>
                 </div>
+                
+                <!-- TRACKER SUMMARY SECTION -->
+                <div style="background: linear-gradient(135deg, #1a3a7a 0%, #00205B 100%); color: white; padding: 25px; margin: 0;">
+                    <h3 style="color: #C4A000; margin-bottom: 15px; font-size: 1.3em;">📋 Assessment Tracker Summary</h3>
+                    <p style="font-size: 0.9em; opacity: 0.9; margin-bottom: 15px;">Copy this information into your Assessment Tracker at the end of the semester.</p>
+                    
+                    <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 10px; margin-bottom: 15px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div>
+                                <div style="font-size: 0.8em; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px;">Overall Safety Level</div>
+                                <div style="font-size: 1.4em; font-weight: 700; color: ${totalScore >= 48 ? '#4CAF50' : '#F5E6A3'};">${safetyLevel} (${totalScore}/80)</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.8em; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px;">Current Zone</div>
+                                <div style="font-size: 1.4em; font-weight: 700; color: #F5E6A3;">${level.zone === 'learning' ? '🚀 Learning Zone' : level.zone === 'anxiety' ? '😟 Anxiety Zone' : '😰 Comfort Zone'}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.8em; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px;">Strongest Dimension</div>
+                                <div style="font-size: 1.2em; font-weight: 600;">${dimensionData[highestDim].icon} ${dimensionData[highestDim].name} (${scores[highestDim]}/20)</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.8em; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px;">Growth Opportunity</div>
+                                <div style="font-size: 1.2em; font-weight: 600;">${dimensionData[lowestDim].icon} ${dimensionData[lowestDim].name} (${scores[lowestDim]}/20)</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                        <div style="font-size: 0.8em; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Dimension Scores</div>
+                        <div style="font-family: monospace; font-size: 1em;">
+                            Voice: ${scores.voice}/20 | Risk: ${scores.risk}/20 | Mistakes: ${scores.mistakes}/20 | Inclusion: ${scores.inclusion}/20
+                        </div>
+                    </div>
+
+                    <div style="background: rgba(196, 160, 0, 0.2); padding: 15px; border-radius: 8px; border-left: 4px solid #C4A000;">
+                        <div style="font-size: 0.8em; opacity: 0.8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Key Characteristics for SWOT Analysis</div>
+                        <div style="font-size: 0.95em; line-height: 1.6;">
+                            <strong>Profile:</strong> ${profileDescription}<br>
+                            <strong>Strength Area:</strong> ${dimensionData[highestDim].profileSummary}<br>
+                            <strong>Growth Area:</strong> ${dimensionData[lowestDim].profileSummary}
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 15px; padding: 12px; background: rgba(255,255,255,0.1); border-radius: 8px; font-family: monospace; font-size: 0.85em;">
+                        <span style="opacity: 0.7;">Tracker Code:</span> <strong style="color: #F5E6A3;">${trackerCode}</strong> 
+                        <span style="opacity: 0.7; margin-left: 15px;">|</span>
+                        <span style="opacity: 0.7; margin-left: 15px;">Raw:</span> <strong>V${scores.voice}-R${scores.risk}-M${scores.mistakes}-I${scores.inclusion}</strong>
+                    </div>
+                </div>
+                
                 <div class="dim-scores">
                     ${['voice', 'risk', 'mistakes', 'inclusion'].map(dim => `
                         <div class="dim-score-card ${dim === highestDim ? 'highest' : ''} ${dim === lowestDim ? 'lowest' : ''}">
@@ -332,6 +436,31 @@
                     <div class="result-section"><h4>🎯 Growth Opportunity: ${dimensionData[lowestDim].name}</h4>
                         <div class="dim-detail ${lowestDim}"><h5 style="color: ${dimensionData[lowestDim].color};">${dimensionData[lowestDim].icon} ${dimensionData[lowestDim].name}</h5><p>${dimensionData[lowestDim].description}</p><p><strong>Building Strategies:</strong></p><ul>${dimensionData[lowestDim].building.map(b => `<li style="color: ${dimensionData[lowestDim].color};">${b}</li>`).join('')}</ul></div>
                     </div>
+                    
+                    <!-- SWOT Preview Section -->
+                    <div style="background: linear-gradient(135deg, var(--blue-light) 0%, #f0f4fa 100%); border-radius: 14px; padding: 25px; margin: 20px 0; border: 2px solid var(--chapman-blue);">
+                        <h4 style="color: var(--chapman-blue); margin-bottom: 15px; font-size: 1.2em;">📊 SWOT Analysis Preview (For Assessment Tracker)</h4>
+                        <p style="color: var(--text-secondary); font-size: 0.9em; margin-bottom: 15px;">This preview shows how your Psychological Safety profile will contribute to your comprehensive SWOT analysis.</p>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div style="background: #E8F5E9; padding: 15px; border-radius: 10px; border-left: 4px solid #2E7D32;">
+                                <strong style="color: #2E7D32; font-size: 0.9em;">STRENGTH</strong>
+                                <p style="font-size: 0.9em; margin-top: 5px; color: var(--text-secondary);">${dimensionData[highestDim].swotHigh}</p>
+                            </div>
+                            <div style="background: #FFEBEE; padding: 15px; border-radius: 10px; border-left: 4px solid #C62828;">
+                                <strong style="color: #C62828; font-size: 0.9em;">WEAKNESS</strong>
+                                <p style="font-size: 0.9em; margin-top: 5px; color: var(--text-secondary);">${dimensionData[lowestDim].swotLow}</p>
+                            </div>
+                            <div style="background: #E3F2FD; padding: 15px; border-radius: 10px; border-left: 4px solid #1565C0;">
+                                <strong style="color: #1565C0; font-size: 0.9em;">OPPORTUNITY</strong>
+                                <p style="font-size: 0.9em; margin-top: 5px; color: var(--text-secondary);">Focus on building ${dimensionData[lowestDim].name.toLowerCase()} through: ${dimensionData[lowestDim].building[0]}</p>
+                            </div>
+                            <div style="background: #FFF3E0; padding: 15px; border-radius: 10px; border-left: 4px solid #E65100;">
+                                <strong style="color: #E65100; font-size: 0.9em;">THREAT</strong>
+                                <p style="font-size: 0.9em; margin-top: 5px; color: var(--text-secondary);">${totalScore < 48 ? 'Low psychological safety may lead to talent loss, innovation stagnation, and hidden problems' : 'Maintaining high safety requires continuous attention; complacency can erode trust'}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="result-section gold-accent"><h4>🔬 Why Psychological Safety Matters</h4>
                         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
                             <div style="padding: 15px; background: rgba(21,101,192,0.08); border-radius: 10px;"><div style="font-weight: 600; color: var(--voice); margin-bottom: 5px;">📈 Google's Finding</div><div style="font-size: 0.85em; color: var(--text-secondary);">PS was #1 factor in high-performing teams (Project Aristotle)</div></div>
