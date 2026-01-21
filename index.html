@@ -482,45 +482,313 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             const { scores, totalScore, level, highestDim, lowestDim } = window.psResults;
-            doc.setFillColor(0, 32, 91);
-            doc.rect(0, 0, 210, 40, 'F');
+            
+            // Colors
+            const chapmanBlue = [0, 32, 91];
+            const chapmanGold = [196, 160, 0];
+            const textDark = [26, 26, 46];
+            const textMuted = [100, 100, 110];
+            const greenColor = [46, 125, 50];
+            const redColor = [198, 40, 40];
+            const blueColor = [21, 101, 192];
+            const orangeColor = [230, 81, 0];
+            const purpleColor = [123, 31, 162];
+            
+            // Dimension colors
+            const dimColors = { 
+                voice: blueColor, 
+                risk: greenColor, 
+                mistakes: purpleColor, 
+                inclusion: redColor 
+            };
+
+            // Calculate tracker metrics
+            const pct = Math.round((totalScore / 80) * 100);
+            const safetyLevel = totalScore >= 64 ? 'High' : totalScore >= 48 ? 'Moderate' : totalScore >= 32 ? 'Limited' : 'Low';
+            const trackerCode = 'PSA-' + safetyLevel.charAt(0) + '-' + totalScore;
+            const zoneText = level.zone === 'learning' ? 'Learning Zone' : level.zone === 'anxiety' ? 'Anxiety Zone' : 'Comfort Zone';
+
+            // Profile description
+            const profileDesc = totalScore >= 64 
+                ? "Your team demonstrates strong psychological safety. Members feel comfortable speaking up, taking risks, and learning from mistakes. This creates an environment where innovation thrives and problems are caught early."
+                : totalScore >= 48 
+                ? "Your team has moderate psychological safety with room to grow. Some members may still hesitate to speak up or take risks. Focus on building consistency in psychological safety across all situations."
+                : totalScore >= 32
+                ? "Your team has limited psychological safety. Many members likely hold back ideas and concerns due to fear of consequences. Immediate attention is needed to build trust and openness."
+                : "Your team lacks psychological safety. Members stay silent to avoid risk, severely limiting learning and innovation. This requires urgent leadership attention to rebuild trust.";
+
+            // Helper function
+            function addWrappedText(text, x, startY, maxWidth, lineHeight) {
+                const lines = doc.splitTextToSize(text, maxWidth);
+                let currentY = startY;
+                lines.forEach(function(line) {
+                    if (currentY > 275) { doc.addPage(); currentY = 20; }
+                    doc.text(line, x, currentY);
+                    currentY += lineHeight;
+                });
+                return currentY;
+            }
+
+            // ===== PAGE 1: Header and Overview =====
+            doc.setFillColor(chapmanBlue[0], chapmanBlue[1], chapmanBlue[2]);
+            doc.rect(0, 0, 210, 42, 'F');
             doc.setFontSize(10);
             doc.setTextColor(255, 255, 255);
             doc.text('CHAPMAN UNIVERSITY', 105, 12, { align: 'center' });
-            doc.setFontSize(16);
-            doc.text('Psychological Safety Assessment', 105, 25, { align: 'center' });
             doc.setFontSize(9);
-            doc.setTextColor(196, 160, 0);
-            doc.text("Based on Amy Edmondson's Research", 105, 33, { align: 'center' });
-            doc.setFillColor(196, 160, 0);
-            doc.rect(0, 40, 210, 2, 'F');
+            doc.setTextColor(chapmanGold[0], chapmanGold[1], chapmanGold[2]);
+            doc.text('Argyros College of Business and Economics', 105, 18, { align: 'center' });
+            doc.setFontSize(16);
+            doc.setTextColor(255, 255, 255);
+            doc.text('Psychological Safety Assessment', 105, 28, { align: 'center' });
+            doc.setFontSize(9);
+            doc.text("Based on Amy Edmondson's Research", 105, 36, { align: 'center' });
+            doc.setFillColor(chapmanGold[0], chapmanGold[1], chapmanGold[2]);
+            doc.rect(0, 42, 210, 2, 'F');
+
             let y = 52;
-            doc.setFontSize(11);
-            doc.setTextColor(26, 26, 46);
-            doc.text(`Student: ${studentName}`, 20, y);
-            doc.text(`Date: ${new Date(surveyDate).toLocaleDateString()}`, 120, y);
-            y += 15;
-            doc.setFillColor(0, 32, 91);
-            doc.roundedRect(20, y, 170, 18, 3, 3, 'F');
+
+            // Student Info
+            doc.setFontSize(10);
+            doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+            doc.text('Student: ' + studentName, 20, y);
+            doc.text('Date: ' + new Date(surveyDate).toLocaleDateString(), 140, y);
+            y += 10;
+
+            // Overall Score Banner
+            doc.setFillColor(chapmanBlue[0], chapmanBlue[1], chapmanBlue[2]);
+            doc.roundedRect(20, y, 170, 20, 2, 2, 'F');
             doc.setFontSize(14);
             doc.setTextColor(255, 255, 255);
-            doc.text(`${level.name}: ${totalScore}/80`, 105, y + 12, { align: 'center' });
-            y += 26;
-            doc.setFontSize(10);
-            doc.setTextColor(26, 26, 46);
-            ['voice', 'risk', 'mistakes', 'inclusion'].forEach(dim => {
-                doc.text(`${dimensionData[dim].icon} ${dimensionData[dim].name}: ${scores[dim]}/20`, 25, y);
-                y += 7;
-            });
-            y += 5;
+            doc.text(level.name, 105, y + 9, { align: 'center' });
             doc.setFontSize(11);
-            doc.setTextColor(0, 32, 91);
-            doc.text(`Strongest: ${dimensionData[highestDim].name}`, 20, y); y += 6;
-            doc.text(`Growth Area: ${dimensionData[lowestDim].name}`, 20, y);
+            doc.setTextColor(chapmanGold[0], chapmanGold[1], chapmanGold[2]);
+            doc.text('Score: ' + totalScore + '/80 (' + pct + '%)  |  ' + zoneText, 105, y + 16, { align: 'center' });
+            y += 28;
+
+            // Dimension Scores Box
+            doc.setFillColor(245, 247, 250);
+            doc.roundedRect(20, y, 170, 28, 2, 2, 'F');
+            doc.setFontSize(9);
+            doc.setTextColor(chapmanBlue[0], chapmanBlue[1], chapmanBlue[2]);
+            doc.text('DIMENSION SCORES', 25, y + 7);
             doc.setFontSize(8);
-            doc.setTextColor(100, 100, 110);
-            doc.text('Chapman University • Argyros College of Business • MGMT 316', 105, 287, { align: 'center' });
-            doc.save(`Psychological_Safety_${studentName.replace(/\s+/g, '_')}.pdf`);
+            
+            const dims = ['voice', 'risk', 'mistakes', 'inclusion'];
+            dims.forEach(function(dim, i) {
+                const xPos = i < 2 ? 25 : 110;
+                const yPos = y + 14 + (i % 2) * 7;
+                const c = dimColors[dim];
+                doc.setTextColor(c[0], c[1], c[2]);
+                doc.text(dimensionData[dim].name + ': ' + scores[dim] + '/20', xPos, yPos);
+            });
+            y += 34;
+
+            // Tracker Code Box
+            doc.setFillColor(chapmanBlue[0], chapmanBlue[1], chapmanBlue[2]);
+            doc.roundedRect(20, y, 170, 10, 2, 2, 'F');
+            doc.setFontSize(8);
+            doc.setTextColor(255, 255, 255);
+            doc.text('Tracker: ' + trackerCode + '  |  Raw: V' + scores.voice + '-R' + scores.risk + '-M' + scores.mistakes + '-I' + scores.inclusion + '  |  Level: ' + safetyLevel, 105, y + 7, { align: 'center' });
+            y += 16;
+
+            // Profile Summary
+            doc.setFontSize(10);
+            doc.setTextColor(chapmanBlue[0], chapmanBlue[1], chapmanBlue[2]);
+            doc.text('TEAM SAFETY PROFILE', 20, y);
+            y += 6;
+            doc.setFontSize(9);
+            doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+            y = addWrappedText(profileDesc, 20, y, 170, 4.5);
+            y += 6;
+
+            // Strongest Dimension
+            doc.setFontSize(10);
+            doc.setTextColor(greenColor[0], greenColor[1], greenColor[2]);
+            doc.text('TEAM STRENGTH: ' + dimensionData[highestDim].name + ' (' + scores[highestDim] + '/20)', 20, y);
+            y += 6;
+            doc.setFontSize(9);
+            doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+            y = addWrappedText(dimensionData[highestDim].description, 20, y, 170, 4.5);
+            y += 3;
+            doc.setFontSize(8);
+            doc.text('Signs of Strength:', 20, y);
+            y += 5;
+            dimensionData[highestDim].highBehaviors.forEach(function(b) {
+                doc.text('- ' + b, 25, y);
+                y += 4;
+            });
+            y += 6;
+
+            // Growth Opportunity
+            doc.setFontSize(10);
+            doc.setTextColor(orangeColor[0], orangeColor[1], orangeColor[2]);
+            doc.text('GROWTH OPPORTUNITY: ' + dimensionData[lowestDim].name + ' (' + scores[lowestDim] + '/20)', 20, y);
+            y += 6;
+            doc.setFontSize(9);
+            doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+            y = addWrappedText(dimensionData[lowestDim].description, 20, y, 170, 4.5);
+            y += 3;
+            doc.setFontSize(8);
+            doc.text('Building Strategies:', 20, y);
+            y += 5;
+            dimensionData[lowestDim].building.forEach(function(b) {
+                doc.text('- ' + b, 25, y);
+                y += 4;
+            });
+
+            // ===== PAGE 2: SWOT and Research =====
+            doc.addPage();
+            y = 20;
+
+            // SWOT Header
+            doc.setFillColor(chapmanBlue[0], chapmanBlue[1], chapmanBlue[2]);
+            doc.roundedRect(20, y, 170, 10, 2, 2, 'F');
+            doc.setFontSize(11);
+            doc.setTextColor(255, 255, 255);
+            doc.text('SWOT ANALYSIS - Psychological Safety', 105, y + 7, { align: 'center' });
+            y += 18;
+
+            // SWOT Grid
+            const boxW = 82;
+            const boxH = 32;
+
+            // Strength Box
+            doc.setFillColor(232, 245, 233);
+            doc.roundedRect(20, y, boxW, boxH, 2, 2, 'F');
+            doc.setDrawColor(greenColor[0], greenColor[1], greenColor[2]);
+            doc.setLineWidth(0.5);
+            doc.line(20, y, 20, y + boxH);
+            doc.setFontSize(9);
+            doc.setTextColor(greenColor[0], greenColor[1], greenColor[2]);
+            doc.text('STRENGTH', 25, y + 7);
+            doc.setFontSize(8);
+            doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+            const sLines = doc.splitTextToSize(dimensionData[highestDim].swotHigh, boxW - 10);
+            sLines.forEach(function(line, i) { if (i < 4) doc.text(line, 25, y + 13 + (i * 4)); });
+
+            // Weakness Box
+            doc.setFillColor(255, 235, 238);
+            doc.roundedRect(108, y, boxW, boxH, 2, 2, 'F');
+            doc.setDrawColor(redColor[0], redColor[1], redColor[2]);
+            doc.line(108, y, 108, y + boxH);
+            doc.setFontSize(9);
+            doc.setTextColor(redColor[0], redColor[1], redColor[2]);
+            doc.text('WEAKNESS', 113, y + 7);
+            doc.setFontSize(8);
+            doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+            const wLines = doc.splitTextToSize(dimensionData[lowestDim].swotLow, boxW - 10);
+            wLines.forEach(function(line, i) { if (i < 4) doc.text(line, 113, y + 13 + (i * 4)); });
+
+            y += boxH + 5;
+
+            // Opportunity Box
+            doc.setFillColor(227, 242, 253);
+            doc.roundedRect(20, y, boxW, boxH, 2, 2, 'F');
+            doc.setDrawColor(blueColor[0], blueColor[1], blueColor[2]);
+            doc.line(20, y, 20, y + boxH);
+            doc.setFontSize(9);
+            doc.setTextColor(blueColor[0], blueColor[1], blueColor[2]);
+            doc.text('OPPORTUNITY', 25, y + 7);
+            doc.setFontSize(8);
+            doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+            const oppText = 'Focus on building ' + dimensionData[lowestDim].name.toLowerCase() + ' through: ' + dimensionData[lowestDim].building[0];
+            const oLines = doc.splitTextToSize(oppText, boxW - 10);
+            oLines.forEach(function(line, i) { if (i < 4) doc.text(line, 25, y + 13 + (i * 4)); });
+
+            // Threat Box
+            doc.setFillColor(255, 243, 224);
+            doc.roundedRect(108, y, boxW, boxH, 2, 2, 'F');
+            doc.setDrawColor(orangeColor[0], orangeColor[1], orangeColor[2]);
+            doc.line(108, y, 108, y + boxH);
+            doc.setFontSize(9);
+            doc.setTextColor(orangeColor[0], orangeColor[1], orangeColor[2]);
+            doc.text('THREAT', 113, y + 7);
+            doc.setFontSize(8);
+            doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+            const threatText = totalScore < 48 ? 'Low psychological safety may lead to talent loss, innovation stagnation, and hidden problems' : 'Maintaining high safety requires continuous attention; complacency can erode trust';
+            const tLines = doc.splitTextToSize(threatText, boxW - 10);
+            tLines.forEach(function(line, i) { if (i < 4) doc.text(line, 113, y + 13 + (i * 4)); });
+
+            y += boxH + 15;
+
+            // Why Psychological Safety Matters
+            doc.setFontSize(11);
+            doc.setTextColor(chapmanBlue[0], chapmanBlue[1], chapmanBlue[2]);
+            doc.text('WHY PSYCHOLOGICAL SAFETY MATTERS', 20, y);
+            y += 8;
+
+            const research = [
+                { title: "Google's Project Aristotle:", finding: "PS was the #1 factor in high-performing teams" },
+                { title: "Innovation Impact:", finding: "Psychologically safe teams take more creative risks" },
+                { title: "Learning Speed:", finding: "Teams learn from mistakes instead of hiding them" },
+                { title: "Retention:", finding: "People stay where they feel valued and included" }
+            ];
+
+            doc.setFontSize(8);
+            research.forEach(function(r) {
+                doc.setTextColor(chapmanBlue[0], chapmanBlue[1], chapmanBlue[2]);
+                doc.text(r.title, 25, y);
+                doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+                doc.text(r.finding, 75, y);
+                y += 6;
+            });
+            y += 8;
+
+            // Four Dimensions Reference
+            doc.setFillColor(245, 247, 250);
+            doc.roundedRect(20, y, 170, 38, 2, 2, 'F');
+            doc.setFontSize(9);
+            doc.setTextColor(chapmanBlue[0], chapmanBlue[1], chapmanBlue[2]);
+            doc.text('FOUR DIMENSIONS OF PSYCHOLOGICAL SAFETY', 25, y + 7);
+            y += 12;
+            doc.setFontSize(7);
+            dims.forEach(function(dim) {
+                const c = dimColors[dim];
+                doc.setTextColor(c[0], c[1], c[2]);
+                doc.text(dimensionData[dim].name + ':', 25, y);
+                doc.setTextColor(textMuted[0], textMuted[1], textMuted[2]);
+                const shortDesc = dimensionData[dim].profileSummary.substring(0, 85) + '...';
+                doc.text(shortDesc, 55, y);
+                y += 6;
+            });
+            y += 10;
+
+            // Reflection Questions
+            doc.setFillColor(chapmanBlue[0], chapmanBlue[1], chapmanBlue[2]);
+            doc.roundedRect(20, y, 170, 10, 2, 2, 'F');
+            doc.setFontSize(10);
+            doc.setTextColor(255, 255, 255);
+            doc.text('REFLECTION QUESTIONS', 105, y + 7, { align: 'center' });
+            y += 16;
+
+            const reflectionQs = [
+                'When was the last time you held back an idea or concern? What stopped you?',
+                'How does your team respond when someone makes a mistake?',
+                'Who on your team might not feel safe speaking up? Why?',
+                'What one action could you take this week to increase psychological safety?',
+                'How would you rate the psychological safety in meetings vs. one-on-one conversations?'
+            ];
+            doc.setFontSize(8);
+            doc.setTextColor(textDark[0], textDark[1], textDark[2]);
+            reflectionQs.forEach(function(q, i) {
+                if (y > 275) { doc.addPage(); y = 20; }
+                const qLines = doc.splitTextToSize((i + 1) + '. ' + q, 165);
+                qLines.forEach(function(line) { doc.text(line, 25, y); y += 4; });
+                y += 2;
+            });
+
+            // Footer on all pages
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(8);
+                doc.setTextColor(textMuted[0], textMuted[1], textMuted[2]);
+                doc.text('Page ' + i + ' of ' + pageCount, 105, 287, { align: 'center' });
+                doc.text('Chapman University - Argyros College of Business and Economics - MGMT 316', 105, 292, { align: 'center' });
+            }
+
+            doc.save('Psychological_Safety_Assessment_' + studentName.replace(/\s+/g, '_') + '_' + new Date().toISOString().split('T')[0] + '.pdf');
         }
         function restartAssessment() {
             responses = {};
